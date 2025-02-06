@@ -95,6 +95,9 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
     # Specify scaling factors
     C1 = 2.660
     C2 = 3.268
+
+    # Calculate tolerance
+    tolerance = USL - LSL
     
     # Calculate process limits
     UPL = round(mean + (C1*AmR), round_value)
@@ -255,7 +258,7 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
     return process_capabilities
 
 def multi_chart(df, condition_column, xtick_label_column, USL, LSL, target, figsize=(15,4), subplot_titles=['X Chart','Histogram'],
-                dpi=500, show_limit_values=False, show_xticks=True, round_value=2, tick_interval=2):
+                dpi=500, show_limit_values=False, show_xticks=True, round_value=2, tick_interval=5):
     """
     Generates a process behavior chart (X Chart) and a histogram, including process limits (USL, LSL), target, and UPL, LPL.
     
@@ -535,6 +538,9 @@ def process_capability(data, USL, LSL, target, round_value=2):
     # Specify scaling factors
     C1 = 2.660
     C2 = 3.268
+
+    # Calculate tolerance
+    tolerance = USL - LSL
     
     # Calculate process limits
     UPL = round(mean + (C1*AmR), round_value)

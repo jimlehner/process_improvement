@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import os
 
 def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(15,6), 
-             round_value=2, rotate_labels=0, tickinterval=1, dpi=300, show_limit_values=True):
+             round_value=2, rotate_labels=0, tickinterval=5, dpi=300, show_limit_values=True):
     """
     Generate an XmR chart (X-chart and mR-chart) from the provided DataFrame.
 
@@ -216,7 +216,7 @@ def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(1
     return result_dfs
 
 def xchart(df, values, x_labels, title='', figsize=(15,3), 
-             round_value=2, rotate_labels=0, tickinterval=1, dpi=300, show_limit_values=True):
+             round_value=2, rotate_labels=0, tickinterval=5, dpi=300, show_limit_values=True):
     """
     Generate an X Chart portion of an XmR Chart from the provided DataFrame.
 
@@ -405,7 +405,7 @@ def xchart(df, values, x_labels, title='', figsize=(15,3),
     return result_dfs
 
 def mrchart(df, values, x_labels, title='', figsize=(15,3), 
-             round_value=2, rotate_labels=0, tickinterval=1, dpi=300, show_limit_values=True):
+             round_value=2, rotate_labels=0, tickinterval=5, dpi=300, show_limit_values=True):
     """
     Generate an mR Chart portion of an XmR Chart from the provided DataFrame.
 

@@ -80,8 +80,6 @@ def network_analysis(df_list, condition, label_list, title='Network Analysis', r
         raise ValueError(f"Column '{condition}' contains missing values.")
     if not all(np.issubdtype(df[condition].dtype, np.number) for df in df_list):
         raise TypeError(f"Column '{condition}' must contain only numeric values.")
-    if LSL >= USL:
-        raise ValueError("LSL must be less than USL.")
     
     if color is None:
         color = ['tab:blue']

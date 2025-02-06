@@ -381,7 +381,7 @@ def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels,
     return results_df
 
 def xmr_comparison(df_list, condition, xtick_labels, subplot_titles, 
-                   figsize=(15,6), tick_interval=2, round_value=2, 
+                   figsize=(15,6), tick_interval=5, round_value=2, 
                    dpi=500, show_limit_labels=True):
     
     """
