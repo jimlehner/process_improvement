@@ -442,7 +442,7 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
     # Validate numeric parameters
     if not isinstance(figsize, tuple):
         raise TypeError("figsize must be a tuple.")
-    if not isinstance(tick_interval, int) or not isinstance(round_value, int):
+    if not isinstance(tickinterval, int) or not isinstance(round_value, int):
         raise TypeError("tick_interval and round_value must be integers.")
     
     # Define plotting parameters
