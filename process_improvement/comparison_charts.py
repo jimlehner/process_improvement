@@ -6,8 +6,8 @@ import pandas as pd
 import warnings
 
 def xchart_comparison(df_list, condition, x_labels, list_of_plot_labels, title='',
-                      linestyle='-', y_label='Individual Values (X)', tick_interval=5, round_value=2,
-                      colors=['tab:blue','tab:blue'], figsize=(12,4), rotate_labels=0,
+                      linestyle='-', y_label='Individual Values (X)', tickinterval=5, round_value=2,
+                      colors=['tab:blue','tab:blue'], figsize=(15,3), rotate_labels=0,
                       dpi=300, show_limit_labels=False):
     
     
@@ -208,7 +208,7 @@ def xchart_comparison(df_list, condition, x_labels, list_of_plot_labels, title='
     return results_df
 
 def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels, 
-                       title='', linestyle='-', tick_interval=5, round_value=2,
+                       title='', linestyle='-', tickinterval=5, round_value=2,
                        colors=['tab:blue','tab:blue'], figsize=(15,3),
                        dpi=300, show_limit_labels=False):
     '''
@@ -381,7 +381,7 @@ def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels,
     return results_df
 
 def xmr_comparison(df_list, condition, xtick_labels, subplot_titles, 
-                   figsize=(15,6), tick_interval=5, round_value=2, 
+                   figsize=(15,6), tickinterval=5, round_value=2, 
                    dpi=500, show_limit_labels=True):
     
     """

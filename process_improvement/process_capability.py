@@ -5,7 +5,8 @@ import matplotlib.patches as mpatches
 from matplotlib import pyplot as plt
 
 def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize=(12,4), color='tab:blue',
-                         dpi=500, title='', mean_label=True, target_label=True, show_capabilities=True):
+                         dpi=500, title='', mean_label=True, target_label=True, show_capabilities=True, 
+                         show_annotation_values=False):
     """
     Generates a capability histogram of the provided process data in the context of the 
     specifciation limits and the option of displaying the process capability indices.
@@ -38,6 +39,8 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
         Whether to display the target label (default=True).
     show_capabilities : str, optional
         Whether to display capability indices in the legend (default=True).
+    show_annotation_values : bool, optional
+        If True, displays the values for the USL, LSL, Target, and Mean annotations (default=False)
 
     Returns:
     -------
@@ -95,7 +98,7 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
     # Specify scaling factors
     C1 = 2.660
     C2 = 3.268
-
+    
     # Calculate tolerance
     tolerance = USL - LSL
     
@@ -184,14 +187,33 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
     # Add text labels for limits and centerline
     bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
     arrow=dict(arrowstyle='-|>', color='black', lw=1.5)
+    
+    # Conditional show limit values
+    if show_annotation_values:
+        limit_labels = [USL, LSL, target, mean]
+    else:
+        limit_labels = ['USL', 'LSL', 'Target', 'Mean']
 
-    ax.text(USL, ax.get_ylim()[1] * 1.0, 'USL', color='black', ha='center', va='center', bbox=bbox_props, zorder=3)
-    ax.text(LSL, ax.get_ylim()[1] * 1.0, 'LSL', color='black', ha='center', va='center', bbox=bbox_props, zorder=3)
-        
+    # Get x limit of subplots
+    ylimit = ax.get_ylim()[1]
+
+    # Define the annotation data
+    annotations = [
+        (limit_labels[0], USL, ylimit),
+        (limit_labels[1], LSL, ylimit)
+    ]
+    
+    # Add annotations
+    for label, x_pos, y_pos in annotations:
+        ax.annotate(label,
+                      xy=(x_pos, y_pos),
+                      ha='center',
+                      va='center',
+                      bbox=dict(facecolor='white', boxstyle='round'))
+    
     # Condiitonally display the mean
     if mean_label:
-        ax.text(mean, height_at_mean + half_tick_distance/2, 'Mean',
-                #f'Mean: {mean}', 
+        ax.text(mean, height_at_mean + half_tick_distance/2, limit_labels[3],
                 color='black', ha='center', va='center', 
                 bbox=bbox_props, zorder=3)
         # Place marker at the mean
@@ -204,8 +226,7 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
     if target_label == True:
         ax.text(target, ax.get_ylim()[1], 
                 #(height_at_mean*0.75) + half_tick_distance/2, 
-                'Target',
-                #f'Target: {target}', 
+                limit_labels[2],
                 color='black', ha='center', va='center', 
                 bbox=bbox_props, zorder=3)
         ax.axvline(target, c='black', ls='--', lw=2)
@@ -213,7 +234,7 @@ def capability_histogram(data, USL, LSL, target, round_value=2, bins=10, figsize
     # Define arrow annotations (no text, only arrows)
     arrow_annotations = [
         (LSL, height_at_LSL, 'grey'), 
-        (USL, height_at_LSL, 'grey')
+        (USL, height_at_USL, 'grey')
     ]
     
     # Loop through each arrow and annotation
