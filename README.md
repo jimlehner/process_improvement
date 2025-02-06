@@ -22,7 +22,7 @@ Before you begin, ensure you have met the following requirements:
 ## Installation
 To install `process_improvement.py` directly from GitHub, enter the following command using the `command prompt`:
 
-```pip install git+https://github.com/jimlehner/py-PI```
+```pip install git+https://github.com/jimlehner/py-pi```
 
 ## Usage
 After `installation` the `process_improvement.py` library can be used as follows:
