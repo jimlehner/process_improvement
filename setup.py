@@ -7,7 +7,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='improvement',
+    name='process_improvement',
     version='0.3.0',
     packages=find_packages(),
     description='A custom library of functions used in manufacturing and business process improvement',
