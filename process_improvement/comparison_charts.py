@@ -171,7 +171,7 @@ def xchart_comparison(df_list, condition, x_labels, list_of_plot_labels, title='
 
         # Set the x-tick labels with increased intervals
         tick_interval = tick_interval  # Increase this value to increase the spacing between ticks
-        tick_positions = np.arange(0, len(data), tick_interval)
+        tick_positions = np.arange(0, len(data), tickinterval)
         ax.set_xticks(tick_positions)
         ax.set_xticklabels(x_labels[tick_positions], rotation=rotate_labels, ha='center')
         
@@ -497,7 +497,7 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
         axes[0, idx].set_title(title, fontsize=14)
         
         # Set x-tick labels with separate intervals
-        tick_positions = np.arange(0, len(xticks), tick_interval)
+        tick_positions = np.arange(0, len(xticks), tickinterval)
         
         axes[0, idx].set_xticks(tick_positions)
         axes[0, idx].set_xticklabels(xticks.iloc[tick_positions], rotation=0, ha='center')
