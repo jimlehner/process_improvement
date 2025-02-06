@@ -170,7 +170,6 @@ def xchart_comparison(df_list, condition, x_labels, list_of_plot_labels, title='
             ax.set_ylabel(y_label, fontsize=12)
 
         # Set the x-tick labels with increased intervals
-        tick_interval = tick_interval  # Increase this value to increase the spacing between ticks
         tick_positions = np.arange(0, len(data), tickinterval)
         ax.set_xticks(tick_positions)
         ax.set_xticklabels(x_labels[tick_positions], rotation=rotate_labels, ha='center')
@@ -399,7 +398,7 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
         Titles for each subplot corresponding to each DataFrame.
     figsize : tuple, optional
         Figure size in inches (default: (15, 6)).
-    tick_interval : int, optional
+    tickinterval : int, optional
         Interval for x-axis tick labels (default: 2).
     round_value : int, optional
         Number of decimal places for rounding calculations (default: 2).
@@ -421,7 +420,7 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
         - If subplot_titles length does not match df_list length.
     TypeError:
         - If figsize is not a tuple.
-        - If tick_interval or round_value is not an integer.
+        - If tickinterval or round_value is not an integer.
     """
     
     # Validate df_list
@@ -443,7 +442,7 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
     if not isinstance(figsize, tuple):
         raise TypeError("figsize must be a tuple.")
     if not isinstance(tickinterval, int) or not isinstance(round_value, int):
-        raise TypeError("tick_interval and round_value must be integers.")
+        raise TypeError("tickinterval and round_value must be integers.")
     
     # Define plotting parameters
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(15, 6), dpi=500, sharey='row')
