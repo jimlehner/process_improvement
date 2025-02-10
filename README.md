@@ -38,6 +38,7 @@ The `process_improvement.py` pacakge contains 5 modules:
 3. comparison_charts
 4. limit_charts
 5. network_analysis
+   
 Each of these modules can be used to address a different aspect of understanding variation. 
 
 ## Functions
