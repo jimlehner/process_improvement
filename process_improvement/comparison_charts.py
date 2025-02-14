@@ -5,206 +5,180 @@ import numpy as np
 import pandas as pd
 import warnings
 
-def xchart_comparison(df_list, condition, x_labels, list_of_plot_labels, title='',
-                      linestyle='-', y_label='Individual Values (X)', tickinterval=5, round_value=2,
-                      colors=['tab:blue','tab:blue'], figsize=(15,3), rotate_labels=0,
-                      dpi=300, show_limit_labels=False):
-    
+def xmr_comparison(df_list, condition, xtick_labels, subplot_titles, 
+                   figsize=(15,6), tickinterval=5, round_value=2, 
+                   dpi=500, show_limit_labels=True, restrict_UPL=False, restrict_LPL=True):
     
     """
-    Generates X Charts from the provided list of DataFrames and visually compares their statistics.
-
+    Generates a 2x2 subplots of XmR Charts from the provided list of DataFrames and visually compares their statistics.
+    
     Parameters:
     -----------
     df_list : list of pandas.DataFrame
-        A list of DataFrames containing the data to be plotted. Each DataFrame represents a different dataset.
-        
+        A list of DataFrames containing the data to be analyzed.
     condition : str
-        The column name in each DataFrame to be analyzed and plotted on the X-chart.
-        
-    x_labels : str
-        The column name in each DataFrame to be used for x-axis labels (e.g., time or index).
-        
-    list_of_plot_labels : list of str
-        A list of labels for each individual plot, used as titles for the subplots. 
-        The list should be the same length as df_list.
-        
-    title : str, optional
-        The overall title of the entire plot. Default is an empty string.
-        
-    linestyle : str, optional
-        The line style for the plot lines (e.g., '-', '--', '-.', ':'). Default is '-' (solid line).
-        
-    y_label : str, optional
-        The label for the y-axis. Default is 'Individual Values' (X).
-        
+        The column name containing the individual values to be plotted.
+    xtick_labels : str
+        The column name used for the x-axis tick labels.
+    subplot_titles : list of str
+        Titles for each subplot corresponding to each DataFrame.
+    figsize : tuple, optional
+        Figure size in inches (default: (15, 6)).
     tickinterval : int, optional
-        The interval at which x-ticks are placed on the x-axis. Default is 5.
-        
-    colors : list of str, optional
-        A list of colors for the plot lines. Default is ['tab:blue', 'tab:blue'].
-        
-    figsize : tuple of int, optional
-        The size of the figure in inches. Default is (12, 4).
-
-    rotate_labels : int, optional
-        Specify the rotation for the xlabels. Default is 0 (no rotation).
-        
+        Interval for x-axis tick labels (default: 2).
+    round_value : int, optional
+        Number of decimal places for rounding calculations (default: 2).
     dpi : int, optional
-        The resolution of the figure in dots per inch. Default is 300.
+        Dots per inch for figure resolution (default: 500).
+    show_limit_labels : bool, optional
+        If True, displays string labels for process limits and centerlines (default is True).
+    restrict_UPL : bool, optional
+        If True, restricts the value of the Upper Process Limit (UPL) to 100. Default is False.
+    restrict_LPL : bool, optional
+        If True, restricts the value of the Lower Process Limit (LPL) to 0. Default is True.
 
     Returns:
     --------
-    pandas.DataFrame
-        A DataFrame containing calculated statistics and characterizations for each input DataFrame, 
-        including the mean, average moving range (AmR), upper and lower control limits (UPL, LPL), 
-        process limit range (PLR), upper range limit (URL), and whether the data is predictable or unpredictable.
-
-    Notes:
-    ------
-    - This function generates X-charts (control charts) for each DataFrame in df_list, 
-      displaying individual values with their respective control limits.
-    - The function automatically determines whether the process is predictable or unpredictable 
-      based on whether all data points fall within the control limits.
-    - The x-ticks are customized based on the provided tick interval, which controls the spacing between ticks.
-
-    Example Usage:
-    --------------
-    # Assuming df_list and label_list are predefined
-    results = xchart_comparison(
-        df_list=df_list, 
-        condition='data_column', 
-        x_labels='x_column', 
-        list_of_plot_labels=label_list, 
-        title='Comparison of X Control Charts'
-    )
+    stats_df : pandas.DataFrame
+        A DataFrame summarizing process behavior statistics, including mean, UPL, LPL, URL, Process Limit Range (PLR) and process characterization.
+    
+    Raises:
+    -------
+    ValueError:
+        - If df_list is not a list of pandas DataFrames.
+        - If condition or xtick_labels is not a valid column in all DataFrames.
+        - If subplot_titles length does not match df_list length.
+    TypeError:
+        - If figsize is not a tuple.
+        - If tickinterval or round_value is not an integer.
     """
-    # Error handling for input validation
+    
+    # Validate df_list
     if not isinstance(df_list, list) or not all(isinstance(df, pd.DataFrame) for df in df_list):
-        raise TypeError("Input 'df_list' must be a list of pandas DataFrames.")
+        raise ValueError("df_list must be a list of pandas DataFrames.")
+
+    # Validate condition and xtick_labels
+    for df in df_list:
+        if condition not in df.columns:
+            raise ValueError(f"Column '{condition}' not found in one or more DataFrames.")
+        if xtick_labels not in df.columns:
+            raise ValueError(f"Column '{xtick_labels}' not found in one or more DataFrames.")
+
+    # Validate subplot_titles
+    if not isinstance(subplot_titles, list) or len(subplot_titles) != len(df_list):
+        raise ValueError("subplot_titles must be a list of strings with the same length as df_list.")
+
+    # Validate numeric parameters
+    if not isinstance(figsize, tuple):
+        raise TypeError("figsize must be a tuple.")
+    if not isinstance(tickinterval, int) or not isinstance(round_value, int):
+        raise TypeError("tickinterval and round_value must be integers.")
     
-    if not all(isinstance(label, str) for label in list_of_plot_labels):
-        raise TypeError("Each element in 'list_of_plot_labels' must be a string.")
-    
-    if len(df_list) != len(list_of_plot_labels):
-        raise ValueError("The number of labels in 'list_of_plot_labels' must match the number of DataFrames in 'df_list'.")
-    
-    if not isinstance(condition, str) or not all(condition in df.columns for df in df_list):
-        raise ValueError(f"'{condition}' column is missing from one or more DataFrames in 'df_list'.")
-    
-    if not isinstance(x_labels, str) or not all(x_labels in df.columns for df in df_list):
-        raise ValueError(f"'{x_labels}' column is missing from one or more DataFrames in 'df_list'.")
-    
-    # Constants for control limits
-    C1 = 2.660
-    C2 = 3.268
-    
-    color = colors
-    
-    # Calculate statistics
-    stats = [
-        (
-            df[condition].mean(),
-            abs(df[condition].diff()).mean(),
-            df[condition].mean() + C1 * abs(df[condition].diff()).mean(),
-            max(df[condition].mean() - C1 * abs(df[condition].diff()).mean(),0),
-            C2 * abs(df[condition].diff()).mean()
-        )
-        for df in df_list
-    ]
-    
-    # Isolate column to be used for x_labels
-    x_labels_for_plots = [df[x_labels] for df in df_list]
-    
-    # Create results dataframe
-    parameters_df = pd.DataFrame(stats, columns=['Mean', 'AmR', 'UPL', 'LPL', 'URL'])
-    parameters_df['Labels'] = list_of_plot_labels
-    parameters_df['PLR'] = parameters_df['UPL'] - parameters_df['LPL']
-    parameters_df['data'] = [df[condition] for df in df_list]
-    parameters_df['mR'] = [abs(df[condition].diff()) for df in df_list]
-    
-    # Determine predictability
-    parameters_df['Characterization'] = parameters_df.apply(
-        lambda row: 'Predictable' if all(row['LPL'] <= x <= row['UPL'] for x in row['data']) else 'Unpredictable',
-        axis=1
-    )
-    
-    # Plotting
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=figsize, sharey=True, dpi=dpi)
+    # Define plotting parameters
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(15, 6), dpi=500, sharey='row')
     plt.subplots_adjust(wspace=0)
-    plt.suptitle(title, fontsize=14, y=1.05)
-
-    axes = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
-
-    for idx, (data, UPL, LPL, label, ax, x_labels) in enumerate(zip(
-        parameters_df['data'], 
-        parameters_df['UPL'], 
-        parameters_df['LPL'], 
-        parameters_df['Labels'], 
-        axes,
-        x_labels_for_plots)):
     
-        # Plot data
-        ax.plot(data, marker='o', ls=linestyle, color=color[idx % len(color)])
-
+    # Initialize an empty list to store stats for each dataframe
+    stats_list = []
+    
+    # Loop through the df_list and plot on the axes
+    for idx, (df, title) in enumerate(zip(df_list, subplot_titles)):
+        data = df[condition]
+        moving_range = round(abs(data.diff()), round_value)
+        xticks = df[xtick_labels]
+        
+        # Specify scaling factors
+        C1 = 2.660
+        C2 = 3.268
+        
+        # Calculate statistics for UPL and LPL
+        mean = round(data.mean(), round_value)
+        average_mR = round(moving_range.mean(), round_value)
+        UPL = min(mean + C1 * average_mR, 100) if restrict_UPL else mean + (C1 * average_mR)
+        LPL = max(mean - C1 * average_mR, 0) if restrict_LPL else mean - (C1 * average_mR)
+        URL = round(C2 * average_mR, round_value)
+        
+        # Characterize process
+        if ((data < LPL) | (data > UPL)).any():
+            characterization = "Unpredictable"
+        elif (moving_range > URL).any():  # Add condition for moving range exceeding the URL
+            characterization = "Unpredictable"
+        else:
+            characterization = "Predictable"
+        
+        # Store statistics in the list
+        stats_list.append({
+            'Label': title,
+            'Mean': mean,
+            'Ave. mR': average_mR,
+            'UPL': UPL,
+            'LPL': LPL,
+            'URL': URL,
+            'PLR': UPL-LPL,
+            'Characterization': characterization
+        })
+        
+        # Plot individual values in the first two subplots (top row)
+        axes[0, idx].plot(data, marker='o')
         # Masking and plotting limits
-        ax.plot(np.ma.masked_where(data < UPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
-        ax.plot(np.ma.masked_where(data > LPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
+        axes[0, idx].plot(np.ma.masked_where(data < UPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
+        axes[0, idx].plot(np.ma.masked_where(data > LPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
+        axes[0, idx].set_title(title, fontsize=14)
+        
+        # Set x-tick labels with separate intervals
+        tick_positions = np.arange(0, len(xticks), tickinterval)
+        
+        axes[0, idx].set_xticks(tick_positions)
+        axes[0, idx].set_xticklabels(xticks.iloc[tick_positions], rotation=0, ha='center')
 
-        # Plotting lines for mean, UPL, and LPL
-        mean = np.mean(data)
-        ax.axhline(mean, ls='--', color='black')
-        ax.axhline(UPL, ls='--', color='red')
-        ax.axhline(LPL, ls='--', color='red')
+        axes[1, idx].set_xticks(tick_positions)
+        axes[1, idx].set_xticklabels(xticks.iloc[tick_positions], rotation=0, ha='center')
 
-        # Styling axes
-        ax.grid(False)
-        ax.set_title(label, fontsize=12)
-        # Despine plot
+        # Add UPL and LPL horizontal lines for individual values plot
+        axes[0, idx].axhline(UPL, color='red', linestyle='--')
+        axes[0, idx].axhline(LPL, color='red', linestyle='--')
+        axes[0, idx].axhline(mean, color='black', linestyle='--')
+        
+        # Plot moving range in the second row
+        axes[1, idx].plot(moving_range, marker='o')
+    
+        # Add UPL and LPL horizontal lines for moving range plot
+        axes[1, idx].axhline(URL, color='red', linestyle='--')
+        axes[1, idx].axhline(average_mR, color='black', linestyle='--')
+        axes[1, idx].plot(np.ma.masked_where(moving_range < URL, moving_range), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
+        
+        # Add label to y-axes
+        axes[0, 0].set_ylabel('Individual Values (X)')
+        axes[1, 0].set_ylabel('Moving Ranges (mR)')
+        
+        # Establish bbox properties
+        bbox_limits = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
+        bbox_centerlines = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
+    
+        # Add labels to 2nd and 4th plots
+        if show_limit_labels:
+            if idx == 1:
+                axes[0, idx].text(axes[0, idx].get_xlim()[1], UPL, 'UPL', color='black', ha='center', va='center', bbox=bbox_limits)
+                axes[0, idx].text(axes[0, idx].get_xlim()[1], LPL, 'LPL', color='black', ha='center', va='center', bbox=bbox_limits)
+                axes[0, idx].text(axes[0, idx].get_xlim()[1], mean, 'Mean', color='black', ha='center', va='center', bbox=bbox_centerlines)
+
+            if idx == 1:
+                axes[1, idx].text(axes[1, idx].get_xlim()[1] * 1.0, URL, 'URL', color='black', ha='center', va='center', bbox=bbox_limits)
+                axes[1, idx].text(axes[1, idx].get_xlim()[1] * 1.0, average_mR, r'$\overline{mR}$', color='black', ha='center', va='center', bbox=bbox_centerlines)
+        
+        # Despine subplots
         sns.despine()
-        ax.tick_params(axis='y', which='both', length=0)
-        ax.tick_params(axis='x', which='both')
-
-        # Add y-label only to the first plot
-        if idx == 0:
-            ax.set_ylabel(y_label, fontsize=12)
-
-        # Set the x-tick labels with increased intervals
-        tick_positions = np.arange(0, len(data), tickinterval)
-        ax.set_xticks(tick_positions)
-        ax.set_xticklabels(x_labels[tick_positions], rotation=rotate_labels, ha='center')
-        
-        for ax in axes:
-            ax.spines[['left','bottom']].set_alpha(0.5)
-        
-    if show_limit_labels:
-        limit_labels = ['UPL', 'LPL', 'Mean']
-
-        xlimit = axes[1].get_xlim()[1]
-
-        # Define the annotation data
-        annotations = [
-            (limit_labels[0], xlimit, UPL, axes[1]),
-            (limit_labels[1], xlimit, LPL, axes[1]),
-            (limit_labels[2], xlimit, mean, axes[1]),  # LSL annotation on ax[1]
-        ]
-
-        # Add annotations
-        for label, x_pos, y_pos, axis in annotations:
-            axes[1].annotate(label,
-                          xy=(x_pos, y_pos),
-                          ha='center',
-                          va='center',
-                          bbox=dict(facecolor='white', boxstyle='round'))
-
-    # Show figure 
-    plt.show()
+        # Set alpha to 0.5 for all spines in all subplots
+        for ax in axes.flat:
+            for spine in ax.spines.values():
+                spine.set_alpha(0.5)
+        # Remove ticks on xticks for moving ranges
+        axes[1, idx].set_xticks([])
     
-    # Reorder and return the results dataframe
-    new_order = ['Labels', 'Mean', 'UPL', 'LPL', 'PLR', 'AmR', 'URL', 'Characterization']
-    results_df = round(parameters_df[new_order], round_value)
+    # Convert stats list into DataFrame
+    stats_df = pd.DataFrame(stats_list)
     
-    return results_df
+    return stats_df
 
 def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels, 
                        title='', linestyle='-', tickinterval=5, round_value=2,
@@ -338,7 +312,7 @@ def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels,
         sns.despine()
         
         ax.tick_params(axis='y', which='both', length=0)
-        ax.tick_params(axis='x', which='both')#, length=1)
+        ax.tick_params(axis='x', which='both')
         
         # Add y-label only to the first plot
         if idx == 0:
@@ -363,7 +337,7 @@ def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels,
                           xy=(x_pos, y_pos),
                           ha='center',
                           va='center',
-                          bbox=dict(facecolor='white', boxstyle='round'))
+                          bbox=dict(facecolor='white', edgecolor='black', boxstyle='round'))
         
         # Inside the plotting section of your function
         for ax in axes:
@@ -379,173 +353,196 @@ def mrchart_comparison(df_list, condition, x_labels, list_of_plot_labels,
 
     return results_df
 
-def xmr_comparison(df_list, condition, xtick_labels, subplot_titles, 
-                   figsize=(15,6), tickinterval=5, round_value=2, 
-                   dpi=500, show_limit_labels=True):
+def xchart_comparison(df_list, condition, x_labels, list_of_plot_labels, title='',
+                      linestyle='-', y_label='Individual Values (X)', tickinterval=5, round_value=2,
+                      colors=['tab:blue','tab:blue'], figsize=(15,3), rotate_labels=0,
+                      dpi=300, show_limit_labels=False, restrict_UPL=False, restrict_LPL=True):
     
     """
-    Generates a 2x2 subplots of XmR Charts from the provided list of DataFrames and visually compares their statistics.
-    
+    Generates X Charts from the provided list of DataFrames and visually compares their statistics.
+
     Parameters:
     -----------
     df_list : list of pandas.DataFrame
-        A list of DataFrames containing the data to be analyzed.
+        A list of DataFrames containing the data to be plotted. Each DataFrame represents a different dataset.
     condition : str
-        The column name containing the individual values to be plotted.
-    xtick_labels : str
-        The column name used for the x-axis tick labels.
-    subplot_titles : list of str
-        Titles for each subplot corresponding to each DataFrame.
-    figsize : tuple, optional
-        Figure size in inches (default: (15, 6)).
+        The column name in each DataFrame to be analyzed and plotted on the X-chart.
+    x_labels : str
+        The column name in each DataFrame to be used for x-axis labels (e.g., time or index).
+    list_of_plot_labels : list of str
+        A list of labels for each individual plot, used as titles for the subplots. 
+        The list should be the same length as df_list.
+    title : str, optional
+        The overall title of the entire plot. Default is an empty string.
+    linestyle : str, optional
+        The line style for the plot lines (e.g., '-', '--', '-.', ':'). Default is '-' (solid line).
+    y_label : str, optional
+        The label for the y-axis. Default is 'Individual Values' (X).
     tickinterval : int, optional
-        Interval for x-axis tick labels (default: 2).
-    round_value : int, optional
-        Number of decimal places for rounding calculations (default: 2).
+        The interval at which x-ticks are placed on the x-axis. Default is 5. 
+    colors : list of str, optional
+        A list of colors for the plot lines. Default is ['tab:blue', 'tab:blue'].
+    figsize : tuple of int, optional
+        The size of the figure in inches. Default is (12, 4).
+    rotate_labels : int, optional
+        Specify the rotation for the xlabels. Default is 0 (no rotation).
     dpi : int, optional
-        Dots per inch for figure resolution (default: 500).
-    show_limit_labels : bool, optional
-        If True, displays string labels for process limits and centerlines (default is True). 
+        The resolution of the figure in dots per inch. Default is 300.
+    restrict_UPL : bool, optional
+        If True, restricts the value of the Upper Process Limit (UPL) to 100. Default is False.
+    restrict_LPL : bool, optional
+        If True, restricts the value of the Lower Process Limit (LPL) to 0. Default is True.
 
     Returns:
     --------
-    stats_df : pandas.DataFrame
-        A DataFrame summarizing process behavior statistics, including mean, UPL, LPL, URL, Process Limit Range (PLR) and process characterization.
-    
-    Raises:
-    -------
-    ValueError:
-        - If df_list is not a list of pandas DataFrames.
-        - If condition or xtick_labels is not a valid column in all DataFrames.
-        - If subplot_titles length does not match df_list length.
-    TypeError:
-        - If figsize is not a tuple.
-        - If tickinterval or round_value is not an integer.
+    pandas.DataFrame
+        A DataFrame containing calculated statistics and characterizations for each input DataFrame, 
+        including the mean, average moving range (AmR), upper and lower control limits (UPL, LPL), 
+        process limit range (PLR), upper range limit (URL), and whether the data is predictable or unpredictable.
+
+    Notes:
+    ------
+    - This function generates X-charts (control charts) for each DataFrame in df_list, 
+      displaying individual values with their respective control limits.
+    - The function automatically determines whether the process is predictable or unpredictable 
+      based on whether all data points fall within the control limits.
+    - The x-ticks are customized based on the provided tick interval, which controls the spacing between ticks.
+
+    Example Usage:
+    --------------
+    # Assuming df_list and label_list are predefined
+    results = xchart_comparison(
+        df_list=df_list, 
+        condition='data_column', 
+        x_labels='x_column', 
+        list_of_plot_labels=label_list, 
+        title='Comparison of X Control Charts'
+    )
     """
-    
-    # Validate df_list
+    # Error handling for input validation
     if not isinstance(df_list, list) or not all(isinstance(df, pd.DataFrame) for df in df_list):
-        raise ValueError("df_list must be a list of pandas DataFrames.")
-
-    # Validate condition and xtick_labels
-    for df in df_list:
-        if condition not in df.columns:
-            raise ValueError(f"Column '{condition}' not found in one or more DataFrames.")
-        if xtick_labels not in df.columns:
-            raise ValueError(f"Column '{xtick_labels}' not found in one or more DataFrames.")
-
-    # Validate subplot_titles
-    if not isinstance(subplot_titles, list) or len(subplot_titles) != len(df_list):
-        raise ValueError("subplot_titles must be a list of strings with the same length as df_list.")
-
-    # Validate numeric parameters
-    if not isinstance(figsize, tuple):
-        raise TypeError("figsize must be a tuple.")
-    if not isinstance(tickinterval, int) or not isinstance(round_value, int):
-        raise TypeError("tickinterval and round_value must be integers.")
+        raise TypeError("Input 'df_list' must be a list of pandas DataFrames.")
     
-    # Define plotting parameters
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(15, 6), dpi=500, sharey='row')
+    if not all(isinstance(label, str) for label in list_of_plot_labels):
+        raise TypeError("Each element in 'list_of_plot_labels' must be a string.")
+    
+    if len(df_list) != len(list_of_plot_labels):
+        raise ValueError("The number of labels in 'list_of_plot_labels' must match the number of DataFrames in 'df_list'.")
+    
+    if not isinstance(condition, str) or not all(condition in df.columns for df in df_list):
+        raise ValueError(f"'{condition}' column is missing from one or more DataFrames in 'df_list'.")
+    
+    if not isinstance(x_labels, str) or not all(x_labels in df.columns for df in df_list):
+        raise ValueError(f"'{x_labels}' column is missing from one or more DataFrames in 'df_list'.")
+    
+    # Constants for control limits
+    C1 = 2.660
+    C2 = 3.268
+    
+    color = colors
+    
+    # Function to calculate statistics and limits
+    def calculate_limits(df, condition):
+        mean = df[condition].mean()
+        diff_amr = abs(df[condition].diff()).mean()
+        UPL = min(mean + C1 * diff_amr, 100) if restrict_UPL else mean + C1 * diff_amr
+        LPL = max(mean - C1 * diff_amr, 0) if restrict_LPL else mean - C1 * diff_amr
+        URL = C2 * diff_amr
+        return mean, diff_amr, UPL, LPL, URL
+
+    # Calculate statistics
+    stats = [calculate_limits(df, condition) for df in df_list]
+    
+    # Isolate column to be used for x_labels
+    x_labels_for_plots = [df[x_labels] for df in df_list]
+    
+    # Create results dataframe
+    parameters_df = pd.DataFrame(stats, columns=['Mean', 'AmR', 'UPL', 'LPL', 'URL'])
+    parameters_df['Labels'] = list_of_plot_labels
+    parameters_df['PLR'] = parameters_df['UPL'] - parameters_df['LPL']
+    parameters_df['data'] = [df[condition] for df in df_list]
+    parameters_df['mR'] = [abs(df[condition].diff()) for df in df_list]
+    
+    # Determine predictability
+    parameters_df['Characterization'] = parameters_df.apply(
+        lambda row: 'Predictable' if all(row['LPL'] <= x <= row['UPL'] for x in row['data']) else 'Unpredictable',
+        axis=1
+    )
+    
+    # Plotting
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=figsize, sharey=True, dpi=dpi)
     plt.subplots_adjust(wspace=0)
+    plt.suptitle(title, fontsize=14, y=1.05)
+
+    axes = axes.flatten() if isinstance(axes, np.ndarray) else [axes]
+
+    for idx, (data, UPL, LPL, label, ax, x_labels) in enumerate(zip(
+        parameters_df['data'], 
+        parameters_df['UPL'], 
+        parameters_df['LPL'], 
+        parameters_df['Labels'], 
+        axes,
+        x_labels_for_plots)):
     
-    # Initialize an empty list to store stats for each dataframe
-    stats_list = []
-    
-    # Loop through the df_list and plot on the axes
-    for idx, (df, title) in enumerate(zip(df_list, subplot_titles)):
-        data = df[condition]
-        moving_range = round(abs(data.diff()), round_value)
-        xticks = df[xtick_labels]
-        
-        # Specify scaling factors
-        C1 = 2.660
-        C2 = 3.268
-        
-        # Calculate statistics for UPL and LPL
-        mean = round(data.mean(), round_value)
-        average_mR = round(moving_range.mean(), round_value)
-        UPL = round(mean + (C1 * average_mR), round_value)
-        LPL = round(max(mean - (C1 * average_mR), 0), round_value)
-        URL = round(C2 * average_mR, round_value)
-        
-        # Characterize process
-        if ((data < LPL) | (data > UPL)).any():
-            characterization = "Unpredictable"
-        elif (moving_range > URL).any():  # Add condition for moving range exceeding the URL
-            characterization = "Unpredictable"
-        else:
-            characterization = "Predictable"
-        
-        # Store statistics in the list
-        stats_list.append({
-            'Label': title,
-            'Mean': mean,
-            'Ave. mR': average_mR,
-            'UPL': UPL,
-            'LPL': LPL,
-            'URL': URL,
-            'PLR': UPL-LPL,
-            'Characterization': characterization
-        })
-        
-        # Plot individual values in the first two subplots (top row)
-        axes[0, idx].plot(data, marker='o')
+        # Plot data
+        ax.plot(data, marker='o', ls=linestyle, color=color[idx % len(color)])
+
         # Masking and plotting limits
-        axes[0, idx].plot(np.ma.masked_where(data < UPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
-        axes[0, idx].plot(np.ma.masked_where(data > LPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
-        axes[0, idx].set_title(title, fontsize=14)
-        
-        # Set x-tick labels with separate intervals
-        tick_positions = np.arange(0, len(xticks), tickinterval)
-        
-        axes[0, idx].set_xticks(tick_positions)
-        axes[0, idx].set_xticklabels(xticks.iloc[tick_positions], rotation=0, ha='center')
+        ax.plot(np.ma.masked_where(data < UPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
+        ax.plot(np.ma.masked_where(data > LPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
 
-        axes[1, idx].set_xticks(tick_positions)
-        axes[1, idx].set_xticklabels(xticks.iloc[tick_positions], rotation=0, ha='center')
+        # Plotting lines for mean, UPL, and LPL
+        mean = np.mean(data)
+        ax.axhline(mean, ls='--', color='black')
+        ax.axhline(UPL, ls='--', color='red')
+        ax.axhline(LPL, ls='--', color='red')
 
-        # Add UPL and LPL horizontal lines for individual values plot
-        axes[0, idx].axhline(UPL, color='red', linestyle='--')
-        axes[0, idx].axhline(LPL, color='red', linestyle='--')
-        axes[0, idx].axhline(mean, color='black', linestyle='--')
-        
-        # Plot moving range in the second row
-        axes[1, idx].plot(moving_range, marker='o')
-    
-        # Add UPL and LPL horizontal lines for moving range plot
-        axes[1, idx].axhline(URL, color='red', linestyle='--')
-        axes[1, idx].axhline(average_mR, color='black', linestyle='--')
-        axes[1, idx].plot(np.ma.masked_where(moving_range < URL, moving_range), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
-        
-        # Add label to y-axes
-        axes[0, 0].set_ylabel('Individual Values (X)')
-        axes[1, 0].set_ylabel('Moving Ranges (mR)')
-        
-        # Establish bbox properties
-        bbox_limits = dict(boxstyle="round,pad=0.3", fc="white", ec="red", lw=1)
-        bbox_centerlines = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
-    
-        # Add labels to 2nd and 4th plots
-        if show_limit_labels:
-            if idx == 1:
-                axes[0, idx].text(axes[0, idx].get_xlim()[1] * 1.0, UPL, 'UPL', color='red', ha='center', va='center', bbox=bbox_limits)
-                axes[0, idx].text(axes[0, idx].get_xlim()[1] * 1.0, LPL, 'LPL', color='red', ha='center', va='center', bbox=bbox_limits)
-                axes[0, idx].text(axes[0, idx].get_xlim()[1] * 1.0, mean, 'Mean', color='black', ha='center', va='center', bbox=bbox_centerlines)
+        # Styling axes
+        ax.grid(False)
+        ax.set_title(label, fontsize=12)
 
-            if idx == 1:
-                axes[1, idx].text(axes[1, idx].get_xlim()[1] * 1.0, URL, 'URL', color='red', ha='center', va='center', bbox=bbox_limits)
-                axes[1, idx].text(axes[1, idx].get_xlim()[1] * 1.0, average_mR, r'$\overline{mR}$', color='black', ha='center', va='center', bbox=bbox_centerlines)
-        
-        # Despine subplots
+        # Despine plot
         sns.despine()
-        # Set alpha to 0.5 for all spines in all subplots
-        for ax in axes.flat:
-            for spine in ax.spines.values():
-                spine.set_alpha(0.5)
-        # Remove ticks on xticks for moving ranges
-        axes[1, idx].set_xticks([])
+        ax.tick_params(axis='y', which='both', length=0)
+        ax.tick_params(axis='x', which='both')
+
+        # Add y-label only to the first plot
+        if idx == 0:
+            ax.set_ylabel(y_label, fontsize=12)
+
+        # Set the x-tick labels with increased intervals
+        tick_positions = np.arange(0, len(data), tickinterval)
+        ax.set_xticks(tick_positions)
+        ax.set_xticklabels(x_labels[tick_positions], rotation=rotate_labels, ha='center')
+        
+        for ax in axes:
+            ax.spines[['left','bottom']].set_alpha(0.5)
+        
+    if show_limit_labels:
+        limit_labels = ['UPL', 'LPL', 'Mean']
+
+        xlimit = axes[1].get_xlim()[1]
+
+        # Define the annotation data
+        annotations = [
+            (limit_labels[0], xlimit, UPL, axes[1]),
+            (limit_labels[1], xlimit, LPL, axes[1]),
+            (limit_labels[2], xlimit, mean, axes[1]),
+        ]
+
+        # Add annotations
+        for label, x_pos, y_pos, axis in annotations:
+            axes[1].annotate(label,
+                          xy=(x_pos, y_pos),
+                          ha='center',
+                          va='center',
+                          bbox=dict(facecolor='white', edgecolor='black', boxstyle='round'))
+
+    # Show figure 
+    plt.show()
     
-    # Convert stats list into DataFrame
-    stats_df = pd.DataFrame(stats_list)
+    # Reorder and return the results dataframe
+    new_order = ['Labels', 'Mean', 'UPL', 'LPL', 'PLR', 'AmR', 'URL', 'Characterization']
+    results_df = round(parameters_df[new_order], round_value)
     
-    return stats_df
+    return results_df

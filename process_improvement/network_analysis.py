@@ -7,7 +7,7 @@ import warnings
 
 def network_analysis(df_list, condition, label_list, title='Network Analysis', rows=1, 
                      cols=2, linestyle='-', xticks=False, hide_last='Off', color=None,
-                     round_value=3, figsize=(15,10), dpi=300):
+                     round_value=3, figsize=(15,10), dpi=300, restrict_UPL=False, restrict_LPL=True):
     
     """
     Generates a list of small multiples each containing the X Chart portion of an XmR Chart from the provided list of DataFrames.
@@ -38,6 +38,10 @@ def network_analysis(df_list, condition, label_list, title='Network Analysis', r
         Size of the overall figure.
     dpi : int, optional (default=300)
         Dots per inch for the figure resolution.
+    restrict_UPL : bool, optional (default=False)
+        If True, restricts the value of the Upper Process Limit (UPL) to 100.
+    restrict_LPL : bool, optional (default=True)
+        If True, restricts the value of the Lower Process Limit (LPL) to 0.
 
     Returns:
     --------
@@ -117,8 +121,12 @@ def network_analysis(df_list, condition, label_list, title='Network Analysis', r
         (
             df[condition].mean(),
             abs(df[condition].diff()).mean(),
-            max(df[condition].mean() + C1 * abs(df[condition].diff()).mean(),0),
-            max(df[condition].mean() - C1 * abs(df[condition].diff()).mean(),0),
+            
+            min(df[condition].mean() + C1 * abs(df[condition].diff()).mean(), 100) if restrict_UPL 
+            else df[condition].mean() + C1 * abs(df[condition].diff()).mean(),
+            max(df[condition].mean() - C1 * abs(df[condition].diff()).mean(), 0) if restrict_LPL 
+            else df[condition].mean() - C1 * abs(df[condition].diff()).mean(),
+            
             C2 * abs(df[condition].diff()).mean()
         )
         for df in df_list
@@ -153,7 +161,6 @@ def network_analysis(df_list, condition, label_list, title='Network Analysis', r
         # Masking and plotting limits
         ax.plot(np.ma.masked_where(data < UPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
         ax.plot(np.ma.masked_where(data > LPL, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
-#         ax.plot(np.ma.masked_where(data == 0, data), marker='o', ls='none', color='red', markeredgecolor='black', markersize=9)
         
         # Highlight points where the data is zero in red
         zero_indices = (data == 0)

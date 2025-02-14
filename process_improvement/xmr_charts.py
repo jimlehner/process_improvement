@@ -6,7 +6,8 @@ from matplotlib import pyplot as plt
 import os
 
 def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(15,6), 
-             round_value=2, rotate_labels=0, tickinterval=5, dpi=300, show_limit_values=True):
+             round_value=2, rotate_labels=0, tickinterval=1, dpi=300, 
+             show_limit_values=True, restrict_UPL=False, restrict_LPL=True):
     """
     Generate an XmR chart (X-chart and mR-chart) from the provided DataFrame.
 
@@ -38,6 +39,10 @@ def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(1
         Resolution of the figure in dots per inch. Default is 300.
     show_limit_values : bool, optional
         If True, displays numerical values for control limits. Default is True.
+    restrict_UPL : bool, optional
+        If True, restricts the value of the Upper Process Limit (UPL) to 100. Default is False.
+    restrict_LPL : bool, optional
+        If True, restricts the value of the Lower Process Limit (LPL) to 0. Default is True.
 
     Returns:
     --------
@@ -88,11 +93,22 @@ def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(1
     # Define the value of C1 and C2and calculate the UPL and LPL
     C1 = 2.660
     C2 = 3.268
-    # Calculate the process limits
-    UPL = round(mean + (C1*average_mR), round_value)
-    LPL = round(max(mean - (C1*average_mR),0), round_value)
+    
+    # Calculate the Upper Process Limit
+    if restrict_UPL:
+        UPL = round(min(100,mean + (C1*average_mR)), round_value)
+    else:
+        UPL = round(mean + (C1*average_mR), round_value)
+    
+    # Calculate Lower Process Limit    
+    if restrict_LPL:
+        LPL = round(max(mean - (C1*average_mR),0), round_value)
+    else:
+        LPL = round(mean - (C1*average_mR), round_value)
+        
     # Calculate process limit range (PLR)
     PLR = UPL - LPL
+
     # Calculate the Upper Range Limit
     URL = round(C2*average_mR, round_value)
     
@@ -113,14 +129,14 @@ def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(1
     axs[1].plot(labels, moving_ranges, marker='o')
 
     # Function to highlight points outside process limits
-    def highlight_outliers(ax, labels, masked_values, color='tab:red', size=9):
+    def highlight_assignable_causes(ax, labels, masked_values, color='tab:red', size=9):
         for key, masked_data in masked_values.items():
             ax.plot(labels, masked_data, marker='o', ls='none', color=color,
                     markeredgecolor='black', markersize=size)
 
     # Apply outlier highlighting
-    highlight_outliers(axs[0], labels, {"upper_lim": masked_values["upper_lim"], "lower_lim": masked_values["lower_lim"]})
-    highlight_outliers(axs[1], labels, {"url_greater": masked_values["url_greater"]})
+    highlight_assignable_causes(axs[0], labels, {"upper_lim": masked_values["upper_lim"], "lower_lim": masked_values["lower_lim"]})
+    highlight_assignable_causes(axs[1], labels, {"url_greater": masked_values["url_greater"]})
 
     # Add process limit lines
     for value, color in xchart_lines:
@@ -158,11 +174,11 @@ def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(1
 
     # Define the annotation data
     annotations = [
-        (limit_labels[0], xlimit, UPL, axs[0]),  # UPL annotation on ax[0]
-        (limit_labels[1], xlimit, LPL, axs[0]),  # LPL annotation on ax[0]
-        (limit_labels[2], xlimit, mean, axs[0]),  # Mean annotation on ax[0]
-        (limit_labels[3], mR_xlimit, URL, axs[1]),  # USL annotation on ax[1]
-        (limit_labels[4], mR_xlimit, average_mR, axs[1]),  # LSL annotation on ax[1]
+        (limit_labels[0], xlimit, UPL, axs[0]), 
+        (limit_labels[1], xlimit, LPL, axs[0]),
+        (limit_labels[2], xlimit, mean, axs[0]),
+        (limit_labels[3], mR_xlimit, URL, axs[1]),
+        (limit_labels[4], mR_xlimit, average_mR, axs[1]),
     ]
     
     # Add annotations
@@ -216,7 +232,8 @@ def xmrchart(df, values, x_labels, xchart_title='', mrchart_title='', figsize=(1
     return result_dfs
 
 def xchart(df, values, x_labels, title='', figsize=(15,3), 
-             round_value=2, rotate_labels=0, tickinterval=5, dpi=300, show_limit_values=True):
+             round_value=2, rotate_labels=0, tickinterval=5, dpi=300, 
+             show_limit_values=True, restrict_UPL=False, restrict_LPL=True):
     """
     Generate an X Chart portion of an XmR Chart from the provided DataFrame.
 
@@ -243,6 +260,10 @@ def xchart(df, values, x_labels, title='', figsize=(15,3),
         Resolution of the figure in dots per inch. Default is 300.
     show_limit_values : bool, optional
         If True, displays numerical values for control limits. Default is True.
+    restrict_UPL : bool, optional (default=False)
+        If True, restricts the value of the Upper Process Limit (UPL) to 100.
+    restrict_LPL : bool, optional (default=True)
+        If True, restricts the value of the Lower Process Limit (LPL) to 0.
 
     Returns:
     --------
@@ -293,9 +314,22 @@ def xchart(df, values, x_labels, title='', figsize=(15,3),
     # Define the value of C1 and C2and calculate the UPL and LPL
     C1 = 2.660
     C2 = 3.268
-    # Calculate the process limits
-    UPL = round(mean + (C1*average_mR), round_value)
-    LPL = round(max(mean - (C1*average_mR),0), round_value)
+
+    # Calculate the Upper Procss Limit
+    if restrict_UPL:
+        UPL = round(min(100,mean + (C1*average_mR)), round_value)
+    else:
+        UPL = round(mean + (C1*average_mR), round_value)
+    
+    # Calculate Lower Process Limit    
+    if restrict_LPL:
+        LPL = round(max(mean - (C1*average_mR),0), round_value)
+    else:
+        LPL = round(mean - (C1*average_mR), round_value)
+    
+    # Calculate process limit range (PLR)
+    PLR = UPL - LPL
+    
     # Calculate process limit range (PLR)
     PLR = UPL - LPL
     # Calculate the Upper Range Limit
