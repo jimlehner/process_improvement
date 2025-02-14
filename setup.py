@@ -8,9 +8,9 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='process_improvement',
-    version='0.3.0',
+    version='1.0.3',
     packages=find_packages(),
-    description='A custom library of functions used in manufacturing and business process improvement',
+    description='A Python package for identifying, understanding, and eliminating sources of variation from business and manufacturing processes.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Jim Lehner',

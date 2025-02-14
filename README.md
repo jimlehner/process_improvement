@@ -1,7 +1,11 @@
 # process_improvement.py
-The `process_improvement.py` library is a collection of functions designed to help identify, undersand, and eliminate the influence of the two types of variation from business and manufacturing processes. While the primary tool by which this is facilitated is the the process behavior chart (otherwise known as a control chart), `process_improvement.py` contains additional modules and functions related to the task of process improvement. The `process_improvement.py` library is part of the larger body of work called `The Broken Quality Initiative` (BrokenQuality.com). The aim of BQI is to address industries' pervasive lack of knowledge regarding variation and the only tool capable of making sense of variation, the process behavior chart (control chart). . 
+The `process_improvement.py` library (version 1.0.3) is a collection of modules and functions designed to help identify, understand, and eliminate the influence of the two types of variation (common causes of routine variation and assignable causes of exceptional variation) that influence business and manufacturing processes. The purpose of this library is to provide manufacturing, quality, and process engineers with a free alternative to subscription based software like JMP and Minitab. While both of these software packages provide users with analytical tools capable of making sense of variation, they also divorce users from a deeper understanding of the analysis of data produced by processes. 
 
-Visit [BrokenQuality.com](https://www.BrokenQuality.com/bookshelf) for resources and more details regarding the application and use of `process behavior charts`. 
+The primary tool of the `process_improvement.py` package is the process behavior chart for individual values and a moving range called the XmR Chart. The `process_improvement.py` contains additional modules and functions related to the task of process improvement including capability analysis, network analysis, comparison charts, and limit charts. 
+
+The `process_improvement.py` package is part of the larger body of work called `The Broken Quality Initiative` (BrokenQuality.com). The aim of BQI is to address industries' pervasive lack of knowledge regarding variation and the only tool capable of making sense of variation, the process behavior chart (control chart). 
+
+Visit [BrokenQuality.com](https://www.BrokenQuality.com/bookshelf) for resources and more details regarding the application and use of `process behavior charts`. Contact me **James.Lehner@gmail.com** if you have questions or would like to collaborate. 
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -22,7 +26,7 @@ Before you begin, ensure you have met the following requirements:
 ## Installation
 To install `process_improvement.py` directly from GitHub, enter the following command using the `command prompt`:
 
-```pip install git+https://github.com/jimlehner/py-process-improvement```
+```pip install git+https://github.com/jimlehner/process_improvement```
 
 ## Usage
 After `installation` the `process_improvement.py` library can be used as follows:
@@ -38,7 +42,6 @@ The `process_improvement.py` pacakge contains 5 modules:
 3. comparison_charts
 4. limit_charts
 5. network_analysis
-   
 Each of these modules can be used to address a different aspect of understanding variation. 
 
 ## Functions
