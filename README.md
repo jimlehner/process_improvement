@@ -1,5 +1,5 @@
 # process_improvement.py
-The `process_improvement.py` library (version 1.0.3) is a collection of modules and functions designed to help identify, understand, and eliminate the influence of the two types of variation (common causes of routine variation and assignable causes of exceptional variation) that influence business and manufacturing processes. The purpose of this library is to provide manufacturing, quality, and process engineers with a free alternative to subscription based software like JMP and Minitab. While both of these software packages provide users with analytical tools capable of making sense of variation, they also divorce users from a deeper understanding of the analysis of data produced by processes. 
+The `process_improvement.py` library (version 1.0.4) is a collection of modules and functions designed to help identify, understand, and eliminate the influence of the two types of variation (common causes of routine variation and assignable causes of exceptional variation) that influence business and manufacturing processes. The purpose of this library is to provide manufacturing, quality, and process engineers with a free alternative to subscription based software like JMP and Minitab. While both of these software packages provide users with analytical tools capable of making sense of variation, they also divorce users from a deeper understanding of the analysis of data produced by processes. 
 
 The primary tool of the `process_improvement.py` package is the process behavior chart for individual values and a moving range called the XmR Chart. The `process_improvement.py` contains additional modules and functions related to the task of process improvement including capability analysis, network analysis, comparison charts, and limit charts. 
 
@@ -61,7 +61,7 @@ The `process_capability` module contains 3 functions:
 The `comparison_charts` module contains 3 functions:
 1. `xchart_comparison`: Generates X Charts from the provided list of DataFrames and visually compares their statistics.
 2. `mrchart_comparison`: Generates moving range (mR) Charts from the provided list of DataFrames and visually compares their statistics.
-3. `xmr_comparison`: Generates a 2x2 subplots of XmR Charts from the provided list of DataFrames and visually compares their statistics.
+3. `xmr_comparison`: Dynamically generates a grid of subplots composed of XmR Charts from the provided list of DataFrames. Comparison is limited to a list length of 5.
 
 ```limit_charts```
 The `limit_chart` module contains 1 function:
