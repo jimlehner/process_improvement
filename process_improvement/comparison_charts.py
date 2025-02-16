@@ -7,10 +7,12 @@ import warnings
 
 def xmr_comparison(df_list, condition, xtick_labels, subplot_titles, 
                    figsize=(15,6), tickinterval=5, round_value=2, 
-                   dpi=500, show_limit_labels=True, restrict_UPL=False, restrict_LPL=True):
+                   dpi=500, show_limit_labels=True, restrict_UPL=False, 
+                   restrict_LPL=True):
     
     """
-    Generates a 2x2 subplots of XmR Charts from the provided list of DataFrames and visually compares their statistics.
+    Dynmaically generates a grid of subplots containing XmR Charts based on the length of the provided df_list.
+    Comparison is limited to a list of length 5. For lists larger than length 5 use network_analysis. 
     
     Parameters:
     -----------
@@ -74,9 +76,15 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
     if not isinstance(tickinterval, int) or not isinstance(round_value, int):
         raise TypeError("tickinterval and round_value must be integers.")
     
+    # Get length of df_list
+    n = len(df_list)
+    
     # Define plotting parameters
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(15, 6), dpi=500, sharey='row')
+    fig, axes = plt.subplots(nrows=2, ncols=n, figsize=(15, 6), dpi=500, sharey='row')
     plt.subplots_adjust(wspace=0)
+    
+    if n==1: 
+        axes = np.array([[axes[0]], [axes[1]]])
     
     # Initialize an empty list to store stats for each dataframe
     stats_list = []
@@ -152,20 +160,29 @@ def xmr_comparison(df_list, condition, xtick_labels, subplot_titles,
         axes[1, 0].set_ylabel('Moving Ranges (mR)')
         
         # Establish bbox properties
-        bbox_limits = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
-        bbox_centerlines = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
-    
-        # Add labels to 2nd and 4th plots
-        if show_limit_labels:
-            if idx == 1:
-                axes[0, idx].text(axes[0, idx].get_xlim()[1], UPL, 'UPL', color='black', ha='center', va='center', bbox=bbox_limits)
-                axes[0, idx].text(axes[0, idx].get_xlim()[1], LPL, 'LPL', color='black', ha='center', va='center', bbox=bbox_limits)
-                axes[0, idx].text(axes[0, idx].get_xlim()[1], mean, 'Mean', color='black', ha='center', va='center', bbox=bbox_centerlines)
-
-            if idx == 1:
-                axes[1, idx].text(axes[1, idx].get_xlim()[1] * 1.0, URL, 'URL', color='black', ha='center', va='center', bbox=bbox_limits)
-                axes[1, idx].text(axes[1, idx].get_xlim()[1] * 1.0, average_mR, r'$\overline{mR}$', color='black', ha='center', va='center', bbox=bbox_centerlines)
+        bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=1)
         
+        # Conditionally show limits on last plot in each row
+        if show_limit_labels:
+            # Dictionary to map n values to specific idx conditions
+            idx_conditions = {
+                2: [n // 2, n - 1],
+                3: [n - 1],
+                4: [n - 1, (n * 2) - 1],
+                5: [n - 1, (n * 2) - 1]
+            }
+  
+            # Check if the current index is part of the relevant condition set
+            if idx in idx_conditions.get(n, []):
+                # Top row: UPL, LPL, and Mean labels
+                axes[0, idx].text(axes[0, idx].get_xlim()[1], UPL, 'UPL', color='black', ha='center', va='center', bbox=bbox_props)
+                axes[0, idx].text(axes[0, idx].get_xlim()[1], LPL, 'LPL', color='black', ha='center', va='center', bbox=bbox_props)
+                axes[0, idx].text(axes[0, idx].get_xlim()[1], mean, 'Mean', color='black', ha='center', va='center', bbox=bbox_props)
+
+                # Bottom row: URL and average mR labels
+                axes[1, idx].text(axes[1, idx].get_xlim()[1], URL, 'URL', color='black', ha='center', va='center', bbox=bbox_props)
+                axes[1, idx].text(axes[1, idx].get_xlim()[1], average_mR, r'$\overline{mR}$', color='black', ha='center', va='center', bbox=bbox_props)
+             
         # Despine subplots
         sns.despine()
         # Set alpha to 0.5 for all spines in all subplots
